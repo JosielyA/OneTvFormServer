@@ -1,12 +1,15 @@
-const express = require("express");
-const morgan = require("morgan");
-const nodemailer = require("nodemailer");
-const cors = require("cors");
+import express from "express";
+import "dotenv/config";
+import serverless from "serverless-http";
+import morgan from "morgan";
+import nodemailer from "nodemailer";
+import cors from "cors";
 
 const app = express();
-const port = process.env.port || 3000;
-
 app.use(cors());
+
+const port = process.env.port || 3000;
+const router = express.Router();
 
 app.use(express.text());
 app.use(express.json({ limit: "50mb" }));
@@ -18,15 +21,15 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false, // Use `true` for port 465, `false` for all other ports
   auth: {
-    user: process.env.email,
-    pass: process.env.password,
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD,
   },
   tls: {
     rejectUnauthorized: false,
   },
 });
 
-app.post("/api/formulario", async (req, res) => {
+router.post("/api/formulario", async (req, res) => {
   const {
     nombre,
     compania,
@@ -62,9 +65,11 @@ app.post("/api/formulario", async (req, res) => {
   }
 });
 
-app.get("/api", (req, res) => {
+router.get("/api", (req, res) => {
   res.json({ message: "good" });
 });
 
+app.use("/.netlify/functions/index", router);
+export const handler = serverless(app);
+
 app.listen(port);
-console.log(`Server on port ${port}`);
